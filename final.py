@@ -1,17 +1,12 @@
-#3. Color changing in videos
-#   - options for editing videos
-#   - black and white 
-#   - ask for coordinates to draw stuff
-
-#Ask the user for the file name of the video they want to edit
-#Then ask them what they want to do with the video
 import time
 import cv2
 
 print("Hello, welcome to the video editing software!")
 time.sleep(1)
 while True:
-    w=str(input("What video file do u want to edit: "))
+    w=str(input("What video file do u want to edit (type 'q' to quit): "))
+    if w=="q":
+        break
     print("What do u wanna do with the video")
     print(" 1. Make it black and white")
     print(" 2. Give coordinates to draw something onto the video")
@@ -28,9 +23,7 @@ while True:
     frame_size=(frame_width,frame_height)
     if e == "8":
         break
-    #ask other questions if needed
     if e=="2":
-        #ask what they want to draw
         print("1. circle")
         print("2. square/rectangle")
         print("3. text")
@@ -103,15 +96,13 @@ while True:
                 else:
                     print("omg actually enter values between 0-255")
     elif e == "3":
-        #ask what is needed (ask for new fps)
         fpsnew=int(input("what do u want for ur new fps??? "))
     elif e == "4":
-        #ask what is needed to crop(y1,y2, x1,x2)
         newy1=int(input("where should we start the crop (0 is top)?")) 
         print("Where should we end the crop (",frame_height,"is bottom)")
         newy2=int(input())
         newx1=int(input("where should we start the crop (0 is left)?")) 
-        print("Where should we end the crop (",frame_width,"is right")
+        print("Where should we end the crop (",frame_width,"is right)")
         newx2=int(input())
 
     elif e == "5":
@@ -128,12 +119,9 @@ while True:
         colors=int(input("what color u want to edit?"))
         newValue=int(input("How much of that color do you want? (0 means none, 255 means max): "))
 
-        
-    
-
     if (vid_capture.isOpened() == False):
         print("Error opening the video file")
-        quit()#tell the user to try again
+        quit()
     else:
         fps = int(vid_capture.get(5))
         frame_count = vid_capture.get(7)
@@ -141,53 +129,52 @@ while True:
     frame_width = int(vid_capture.get(3))
     frame_height = int(vid_capture.get(4))
     frame_size = (frame_width,frame_height)
-    #Ask them for new fps here if they want to change that
     name=str(input("uh what do u wanna name ur new file: "))
     new_name=(name+".mp4")
-    
+
+    frame_size_out = frame_size
+    if e == "4":
+        if newx2 < newx1:
+            newx1, newx2 = newx2, newx1
+        if newy2 < newy1:
+            newy1, newy2 = newy2, newy1
+        frame_size_out = (max(1, newx2 - newx1), max(1, newy2 - newy1))
+    elif e == "5":
+        frame_size_out = up_points
+
     if e == "3":
-        output=cv2.VideoWriter(new_name,cv2.VideoWriter_fourcc(*'mp4v'),fpsnew,frame_size)
+        output=cv2.VideoWriter(new_name,cv2.VideoWriter_fourcc(*'mp4v'),fpsnew,frame_size_out)
     else:
-        output=cv2.VideoWriter(new_name,cv2.VideoWriter_fourcc(*"mp4v"),fps,frame_size)
+        output=cv2.VideoWriter(new_name,cv2.VideoWriter_fourcc(*"mp4v"),fps,frame_size_out)
     while(vid_capture.isOpened()):
-        ret, frame = vid_capture.read() #ret = True/False (can we edit the video)
-        #frame = current frame
+        ret, frame = vid_capture.read()
         if ret == True:
-                #if the user wants to make it black and white, turn "frame" black and white
-                #before you do output.write(frame)
                 if e=="1":
                     gray=cv2.cvtColor(frame,cv2.COLOR_BGR2GRAY)
                     frame = cv2.cvtColor(gray, cv2.COLOR_GRAY2BGR)
                 if e=="2":
                     if z=="1":
-                        #draw the circle on the frame
                         cv2.ellipse(frame,center,axis,0,0,360,BGR,thickness=10)
                     elif z=="2":
-                        #draw rectangle/square
                         cv2.rectangle(frame,pointA,pointB,BGR,t)
                     elif z=="3":
-                        #draw text
                         cv2.putText(frame,textt,(orgx,orgy),fontFace=cv2.FONT_HERSHEY_SIMPLEX, fontScale=1.5, color = BGR)
                     elif z=="4":
-                        #draw line
                         cv2.line(frame,(x1,y1),(x2,y2),BGR, thickness=10)
-                if e=="4":#Cropping video
+                if e=="4":
                     frame = frame[newy1:newy2, newx1:newx2]
-                if e == "5":#Resizing
+                if e == "5":
                     frame = cv2.resize(frame, up_points, interpolation= cv2.INTER_LINEAR)
-                if e == "6":#Rotating
-                    frame=cv2.warpAffine(frame,M,(frame_height,frame_width))
-                if e == "7":#Color manipulation
+                if e == "6":
+                    frame=cv2.warpAffine(frame,M,(frame_width,frame_height))
+                if e == "7":
                     frame[:,:,colors] =newValue
                 output.write(frame)
         else:
             print("Stream disconnected")
             break
 
-    # Release the objects
     vid_capture.release()
     output.release()
     print("ye ur video is edited :D")
     print("Take a look at",new_name)
-
-
